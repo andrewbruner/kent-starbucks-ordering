@@ -5,7 +5,7 @@ const app = document.querySelector('#app');
 app.classList.add('container', 'mb-5');
 // header
 const header = document.createElement('header');
-header.classList.add('alert', 'alert-primary', 'sticky-top', 'text-center', 'w-100');
+header.classList.add('alert', 'alert-primary', 'fs-1', 'sticky-top', 'text-center', 'w-100');
 header.textContent = 'Back of House';
 body.insertBefore(header, app);
 // form
@@ -15,22 +15,22 @@ form.addEventListener('submit', handleSubmit);
 cdc.forEach(item => {
 	// row
 	const row = document.createElement('div');
-	row.classList.add('input-group');
+	row.classList.add('input-group', 'input-group-lg');
 	// description
 	const description = document.createElement('div');
-	description.classList.add('col-10', 'input-group-text');
+	description.classList.add('col-9', 'input-group-text');
 	description.textContent = item.description;
 	row.appendChild(description);
 	// input
 	const boh = document.createElement('input');
-	boh.classList.add('col-2', 'form-control');
+	boh.classList.add('col-3', 'form-control');
 	boh.type = 'tel';
 	row.appendChild(boh);
 	form.appendChild(row);
 });
 // button
 const submit = document.createElement('button');
-submit.classList.add('btn', 'btn-primary', 'mt-3');
+submit.classList.add('btn', 'btn-primary', 'fs-1', 'mt-3');
 submit.textContent ='Submit';
 submit.type = 'submit';
 form.appendChild(submit);
