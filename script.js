@@ -10,6 +10,7 @@ header.textContent = 'Back of House';
 body.insertBefore(header, app);
 // form
 const form = document.createElement('form');
+form.addEventListener('submit', handleSubmit);
 // BUILD ROWS
 cdc.forEach(item => {
 	// row
@@ -32,45 +33,25 @@ const submit = document.createElement('button');
 submit.classList.add('btn', 'btn-primary', 'mt-3');
 submit.textContent ='Submit';
 submit.type = 'submit';
-submit.addEventListener('click', handleSubmit);
 form.appendChild(submit);
-const cancel = document.createElement('button');
-cancel.classList.add('btn', 'btn-secondary', 'mt-3');
-cancel.textContent = 'Cancel';
-cancel.type = 'button';
-cancel.addEventListener('click', () => {
-	document.cookie = '{}';
-	window.location.reload();
-});
-form.appendChild(cancel);
 app.append(form);
 
 /* COOKIE */
-let cookie = {};
 function getCookie() {
-	cookie = JSON.parse(document.cookie);
+	let cookie = document.cookie
+		.split('; ')
+		.find(cookie => cookie.startsWith('kso='))
+		?.split('=')[1];
+	cookie = cookie ? JSON.parse(cookie) : { currentStage: 'boh', cdc, };
+	return cookie;
 };
-function setCookie(data) {
+function setCookie(cookie, data) {
 	cookie = { ...cookie, ...data, };
-	document.cookie = JSON.stringify(cookie);
-	getCookie();
+	cookie = JSON.stringify(cookie);
+	document.cookie = `kso=${cookie}`;
 }
-if (document.cookie) {
-	getCookie();
-} else {
-	setCookie({});
-}
+let cookie = getCookie();
 
-const now = new Date(Date.now());
-const currentMonth = now.getMonth();
-const currentDate = now.getDate();
-
-// NEW DAY
-if (currentMonth == cookie.lastAccessed?.month && currentDate == cookie.lastAccessed?.date) {
-	// resume inventory
-} else {
-	setCookie({ lastAccessed: { month: currentMonth, date: currentDate }, currentStage: 'boh', cdc, });
-}
 // CURRENT STAGE: DELIVERED
 if (cookie.currentStage == 'delivered') {
 	viewDelivered();
@@ -99,11 +80,11 @@ function viewOrder() {
 		inputs[i].value = order;
 		inputs[i].readOnly = true;
 	}
+	submit.textContent = 'Complete';
 }
 
 /* SUBMIT HANDLER */
-function handleSubmit(event) {
-	//event.preventDefault();
+function handleSubmit() {
 	const inputs = document.querySelectorAll('input');
 	// current stage: boh
 	if (cookie.currentStage == 'boh') {
@@ -123,7 +104,6 @@ function handleSubmit(event) {
 	}
 	// current stage: order
 	else if (cookie.currentStage == 'order') {
-		setCookie({ currentStage: 'boh' });
+		setCookie(cookie, { currentStage: 'boh' });
 	}
-	
 }
