@@ -1,1 +1,1 @@
-# kent-starbucks-ordering
+# Kent Starbucks Ordering
