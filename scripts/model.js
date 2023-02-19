@@ -144,17 +144,17 @@ const model = {
 				},
 				{
 						"description": "Avocado Spread",
-						"uom": 8,
+						"uom": 1,
 						"par": 4
 				},
 				{
 						"description": "Blueberries",
-						"uom": 12,
+						"uom": 1,
 						"par": 2
 				},
 				{
 						"description": "Ethos Water",
-						"uom": 24,
+						"uom": 1,
 						"par": 1
 				},
 				{
