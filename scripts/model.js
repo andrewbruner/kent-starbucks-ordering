@@ -1,11 +1,10 @@
 const model = {
-	seed: {
-		id: 'data',
+	database: {
 		state: {
-			dist: 'cdc',
+			distributor: 'cdc',
 			stage: 'boh',
 		},
-		database: {
+		data: {
 			cdc: [
 				{
 						"description": "Chai Concentrate",
@@ -246,62 +245,41 @@ const model = {
 			rdc: [],
 		},
 	},
-	data: {},
 
-	updateDatabase(newData) {
-		return new Promise(resolve => {
-			const request = window.indexedDB.open('database', 1);
-			request.onupgradeneeded = event => {
-				const database = event.target.result;
-				const objectStore = database.createObjectStore('data', { keyPath: 'id' });
-				const seed = this.seed;
-				objectStore.add(seed);
-			};
-			request.onsuccess = event => {
-				const database = event.target.result;
-				const transaction = database.transaction('data', 'readwrite');
-				const objectStore = transaction.objectStore('data');
-				const request = objectStore.get('data');
-				request.onsuccess = event => {
-					let data = event.target.result;
-					if (newData) {
-						data = { ...data, ...newData };
-						const request = objectStore.put(data);
-						this.data = data;
-						request.onsuccess = event => {
-							resolve(this.data);
-						};
-					}
-					this.data = data;
-					resolve(this.data);
-				};
-			};
-		});
-		
+	updateRemoteDatabase() {
+		const localDatabase = this.database;
+		const localDatabaseString = JSON.stringify(localDatabase);
+		window.sessionStorage.setItem('database', localDatabaseString);
+	},
+	removeRemoteDatabase() {
+		window.sessionStorage.removeItem('database');
+	},
+	getRemoteDatabase() {
+		const remoteDatabaseString = window.sessionStorage.getItem('database');
+		if (remoteDatabaseString) {
+			const remoteDatabase = JSON.parse(remoteDatabaseString);
+			this.database = remoteDatabase;
+		}
+	},
+	updateLocalDatabase(newData, pathToData) {
+		let localDatabaseReference = this.database;
+		pathToData = pathToData.split('.');
+		let i = 0
+		for (i = 0; i < pathToData.length - 1; i++) {
+			localDatabaseReference = localDatabaseReference[pathToData[i]];
+		}
+		localDatabaseReference[pathToData[i]] = newData;
 	},
 	calculateOrder() {
-		const request = window.indexedDB.open('database', 1);
-			request.onsuccess = event => {
-				const database = event.target.result;
-				const transaction = database.transaction('data', 'readwrite');
-				const objectStore = transaction.objectStore('data');
-				const request = objectStore.get('data');
-				request.onsuccess = event => {
-					let data = event.target.result;
-					data.database.cdc.forEach(item => {
-						item.order = Math.ceil((item.par - item.boh - (item.enRoute * item.uom)) / item.uom);
-						item.order = item.order > 0 ? item.order : '0';
-					});
-					objectStore.put(data);
-					this.data = data;
-				};
-			};
-	},
-	resetDatabase() {
-		const request = window.indexedDB.deleteDatabase('database');
-		request.onsuccess = function(event) {
-			window.location.reload();
-		};
+		const localDatabase = this.database;
+		const distributor = localDatabase.state.distributor;
+		const newData = localDatabase.data[distributor].map(item => {
+			let order = Math.ceil((item.par - item.boh - (item.enRoute * item.uom)) / item.uom);
+			order = order > 0 ? order : 0;
+			item = { ...item, order };
+			return item;
+		});
+		this.updateLocalDatabase(newData, `data.${distributor}`);
 	},
 };
 

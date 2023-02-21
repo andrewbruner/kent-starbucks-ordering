@@ -22,8 +22,10 @@ const view = {
 			},
 		}
 	},
-	updateView(data) {
-		const stage = data.state.stage;
+	updateView(database) {
+		const distributor = database.state.distributor;
+		const stage = database.state.stage;
+		const data = database.data[distributor];
 		// #app
 		const app = document.querySelector('#app');
 		// header
@@ -43,7 +45,7 @@ const view = {
 			form.addEventListener('focusout', event => controller.handleFocusout(event));
 			form.addEventListener('submit', event => controller.handleSubmit(event));
 				// divisions...
-				data.database.cdc.forEach((item, index) => {
+				data.forEach((item, index) => {
 					// division
 					const division = document.createElement('div');
 					division.classList.add('input-group', 'input-group-lg');
@@ -74,7 +76,7 @@ const view = {
 						input.classList.add('col-2', 'form-control');
 						input.dataset.index = index;
 						input.type = 'tel';
-						input.value = data.database.cdc[index][stage] || '';
+						input.value = data[index][stage] || '';
 						input.disabled = stage === 'order';
 						input.readOnly = stage === 'order';
 						division.appendChild(input);
@@ -82,7 +84,7 @@ const view = {
 						// amount
 						const amount = document.createElement('span');
 						amount.classList.add('col-2', 'fs-6', 'input-group-text');
-						amount.textContent = data.state.stage === 'boh' ? 'ea' : 'cs';
+						amount.textContent = stage === 'boh' ? 'ea' : 'cs';
 						division.appendChild(amount);
 					form.appendChild(division);
 				});

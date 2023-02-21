@@ -7,35 +7,47 @@ const controller = {
 		if ((input.value > 0 && input.value < 1000) || input.value === '0') {
 			const value = input.value;
 			const index = parseInt(input.dataset.index);
-			const dist = model.data.state.dist;
-			const stage = model.data.state.stage;
-			const newData = { ...model.data };
-			newData.database[dist][index][stage] = parseInt(value);
-			model.updateDatabase(newData);
+			const distributor = model.database.state.distributor;
+			const stage = model.database.state.stage;
+			const newData = parseInt(value);
+			const pathToData = `data.${distributor}.${index}.${stage}`;
+			model.updateLocalDatabase(newData, pathToData);
+			model.updateRemoteDatabase();
 		}
 	},
 	handleSubmit(event) {
-		const currentStage = model.data.state.stage;
-		const newStage = currentStage === 'boh' ? 'enRoute' : currentStage === 'enRoute' ? 'order' : 'boh';
-		const newData = { ...model.data };
-		newData.state.stage = newStage;
-		newData.database.cdc.forEach(item => {
-			if (isNaN(parseInt(item[currentStage]))) {
-				item[currentStage] = 0;
-			}
-		});
-		model.updateDatabase(newData).then(data => {
-			if (data.state.stage === 'order') {
-				model.calculateOrder();
-			}
-			if (data.state.stage === 'boh') {
-				model.resetDatabase();
-			}
-		});
+		const distributor = model.database.state.distributor;
+		const currentStage = model.database.state.stage;
+		const nextStage = currentStage === 'boh' ? 'enRoute' : currentStage === 'enRoute' ? 'order' : 'boh';
+		
+		if (nextStage === 'boh') {
+			model.removeRemoteDatabase();
+		}
+
+		if (nextStage === 'enRoute' || nextStage === 'order') {
+			const newItemsData = model.database.data[distributor].map(item => {
+				if (isNaN(parseInt(item[currentStage]))) {
+					return { ...item, [currentStage]: 0 };
+				} else {
+					return item;
+				}
+			});
+			const pathToItemsData = `data.${distributor}`;
+			model.updateLocalDatabase(newItemsData, pathToItemsData);
+		}
+
+		if (nextStage === 'order') {
+			model.calculateOrder();
+		}
+		
+		const newStageData = nextStage;
+		const pathToStageData = `state.stage`;
+		model.updateLocalDatabase(newStageData, pathToStageData);
+		
+		if (nextStage !== 'boh') {
+			model.updateRemoteDatabase();
+		}
 	},
 };
-
-model.updateDatabase()
-	.then((data) => view.updateView(data));
 
 export default controller;
