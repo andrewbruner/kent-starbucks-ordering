@@ -42,13 +42,17 @@ const view = {
 		main.classList.add('container', 'mb-5');
 			// form
 			const form = document.createElement('form');
-			form.addEventListener('focusout', event => controller.handleFocusout(event));
+			const alertColor = this.components.header.class[stage];
+			form.addEventListener('focusin', event => controller.handleFocusin(event, alertColor));
+			form.addEventListener('focusout', event => controller.handleFocusout(event, alertColor));
 			form.addEventListener('submit', event => controller.handleSubmit(event));
 				// divisions...
 				data.forEach((item, index) => {
 					// division
 					const division = document.createElement('div');
+					division.addEventListener('click', event => controller.handleClick(event, alertColor));
 					division.classList.add('input-group', 'input-group-lg');
+					division.style.cursor = 'pointer';
 						// span
 						const span = document.createElement('span');
 						span.classList.add('align-items-start', 'col-7', 'flex-column', 'input-group-text');
@@ -76,7 +80,8 @@ const view = {
 						input.classList.add('col-2', 'form-control');
 						input.dataset.index = index;
 						input.type = 'tel';
-						input.value = data[index][stage] || '';
+						const itemValue = data[index][stage];
+						input.value = itemValue !== undefined ? itemValue : '';
 						input.disabled = stage === 'order';
 						input.readOnly = stage === 'order';
 						division.appendChild(input);
