@@ -31,10 +31,10 @@ const view = {
 		app.append(main);
 	},
 
-	updateView(data) {
-		const stage = data.state.stage;
-		const distributor = data.state.distributor;
-		data = data[distributor];
+	updateView(_data) {
+		const stage = _data.state.stage;
+		const distributor = _data.state.distributor;
+		const data = _data[distributor];
 		const components = {
 			header: {
 				class: {
@@ -75,16 +75,16 @@ const view = {
 				form.addEventListener('submit', event => controller.handleSubmit(event));
 					data.forEach((item, index) => {
 						const division = document.createElement('div');
-						division.addEventListener('click', event => controller.handleClick(event, alertColor));
-						division.classList.add('input-group', 'input-group-lg');
+						division.addEventListener('click', event => controller.handleClick(event));
+						division.classList.add('input-group', 'input-group-lg', 'row');
 						division.style.cursor = 'pointer';
 							const span = document.createElement('span');
-							span.classList.add('align-items-start', 'col-7', 'flex-column', 'input-group-text');
+							span.classList.add('align-items-start', 'col-7', 'd-flex', 'flex-column', 'input-group-text');
 								const description = document.createElement('span');
 								description.textContent = item.description;
 							span.append(description);
 								const details = document.createElement('span');
-								details.classList.add('d-flex', 'fs-6', 'fw-l', 'justify-content-between', 'w-100');
+								details.classList.add('d-flex', 'fs-6', 'fw-light', 'justify-content-between', 'w-100');
 									const uom = document.createElement('span');
 									uom.textContent = `${item.uom}/cs`;
 								details.append(uom);
@@ -94,7 +94,7 @@ const view = {
 							span.append(details);
 						division.append(span);
 							const input = document.createElement('input');
-							input.classList.add('col-2', 'form-control');
+							input.classList.add('col', 'form-control');
 							input.dataset.index = index;
 							input.type = 'tel';
 							const itemValue = data[index][stage];
