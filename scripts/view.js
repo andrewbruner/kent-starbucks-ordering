@@ -1,31 +1,57 @@
 import controller from "./controller.js";
 
+/**
+ * Creates a new element.
+ * @param {string} tagName - Type of element
+ * @param {object} [options] - The options object, if any
+ * @param {string[]} [options.classList] - Class names to add to element, if any
+ * @param {{ type: string, callback: function }[]} [options.listeners] - Event listeners to attach to element, if any
+ * @param {object<string, string>} [options.attributes] - Element attributes, if any
+ * @returns {Element} The newly created HTML element
+ */
+function create(tagName, options) {
+	const element = document.createElement(tagName);
+	if (options.classList) {
+		element.classList.add(...options.classList);
+	}
+	if (options.listeners) {
+		options.listeners.forEach(listener => {
+			element.addEventListener(listener.type, (event) => listener.callback(event));
+		});
+	}
+	if (options.attributes) {
+		for (const attribute in options.attributes) {
+			element[attribute] = options.attributes[attribute];
+		}
+	}
+	return element;
+}
+
 const view = {
-	load() {
-		const app = document.querySelector('#app');
-			const header = document.createElement('header');
-			header.classList.add('alert', 'alert-primary', 'sticky-top', 'text-center');
-				const heading = document.createElement('h1');
-				heading.textContent = 'Select Distributor';
+	/**
+	 * Loads initial view.
+	 * @param {string} selector - CSS selector of app container element
+	 */
+	load(selector) {
+		const app = document.querySelector(selector);
+			const header = create('header', { classList: ['alert', 'alert-primary', 'sticky-top', 'text-center'] });
+				const heading = create('h1', { attributes: { textContent: 'Select Distributor' }});
 			header.append(heading);
 		app.append(header);
-			const main = document.createElement('main');
-			main.classList.add('container');
-				const form = document.createElement('form');
-				form.addEventListener('submit', event => controller.handleSubmit(event));
-				form.classList.add('distributor');
-				form.classList.add('d-flex', 'flex-column');
-					const cdcButton = document.createElement('button');
-					cdcButton.classList.add('btn', 'btn-lg', 'btn-primary', 'mb-3');
-					cdcButton.textContent = 'CDC';
-					cdcButton.type = 'submit';
-					cdcButton.value = 'cdc';
+			const main = create('main', { classList: ['container'] });
+				const form = create('form', {
+					classList: ['_distributor', 'd-flex', 'flex-column'],
+					listeners: [{ type: 'submit', callback: controller.handleSubmit }]
+				});
+					const cdcButton = create('button', {
+						classList: ['btn', 'btn-lg', 'btn-primary', 'mb-3'],
+						attributes: { textContent: 'CDC', type: 'submit', value: 'cdc' }
+					});
 				form.append(cdcButton);
-					const rdcButton = document.createElement('button');
-					rdcButton.classList.add('btn', 'btn-lg', 'btn-primary');
-					rdcButton.textContent = 'RDC';
-					rdcButton.type = 'submit';
-					rdcButton.value = 'rdc';
+					const rdcButton = create('button', {
+						classList: ['btn', 'btn-lg', 'btn-primary'],
+						attributes: { textContent: 'RDC', type: 'submit', value: 'rdc' }
+					});
 				form.append(rdcButton);
 			main.append(form);
 		app.append(main);
@@ -77,6 +103,7 @@ const view = {
 						const division = document.createElement('div');
 						division.addEventListener('click', event => controller.handleClick(event));
 						division.classList.add('input-group', 'input-group-lg', 'row');
+						division.dataset.index = index;
 						division.style.cursor = 'pointer';
 							const span = document.createElement('span');
 							span.classList.add('align-items-start', 'col-7', 'd-flex', 'flex-column', 'input-group-text');
@@ -95,17 +122,16 @@ const view = {
 						division.append(span);
 							const input = document.createElement('input');
 							input.classList.add('col', 'form-control');
-							input.dataset.index = index;
 							input.type = 'tel';
 							const itemValue = data[index][stage];
 							input.value = itemValue !== undefined ? itemValue : '';
 							input.disabled = stage === 'order';
 							input.readOnly = stage === 'order';
 						division.append(input);
-							const amount = document.createElement('span');
-							amount.classList.add('col-2', 'fs-6', 'input-group-text');
-							amount.textContent = stage === 'boh' ? 'ea' : 'cs';
-						division.append(amount);
+							const units = document.createElement('span');
+							units.classList.add('col-2', 'fs-6', 'input-group-text');
+							units.textContent = stage === 'boh' ? 'ea' : 'cs';
+						division.append(units);
 						form.append(division);
 					});
 					const button = document.createElement('button');
@@ -123,8 +149,7 @@ const view = {
 		const form = document.querySelector('form');
 		const divisions = form.children;
 		const details = divisions[index].firstChild.lastChild;
-		details.lastChild.remove();
-		const par = document.createElement('span');
+		const par = details.lastChild
 		par.textContent = `${item.boh >= 0 ? item.boh + 'ea / ' : ''}${item.enRoute >= 0 ? item.enRoute + 'cs / ' : ''}${item.par}par`;
 		details.append(par);
 	},

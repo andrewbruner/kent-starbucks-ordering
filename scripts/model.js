@@ -1,19 +1,9 @@
-const model = {
+/**
+ * @typedef {import('./types.js').Item} Item
+ * @typedef {import('./types.js').Data} Data
+ */
 
-	/**
-	 * @typedef {Object} Item
-	 * @property {string} description
-	 * @property {number} uom
-	 * @property {number} par
-	 * @property {number} [boh]
-	 * @property {number} [enRoute]
-	 * @property {number} [order]
-	 * 
-	 * @typedef {Object} Data 
-	 * @property {{stage: string, distributor: string}} state
-	 * @property {Item[]} [cdc]
-	 * @property {Item[]} [rdc]
-	 */
+const model = {
 
 	async fetchRemote(distributor) {
 		const spreadsheetId = String('1zx7TGo9KbCaaZYzrFheBvNNjMopc6_Caxy8_xwKd3xI');
@@ -41,8 +31,13 @@ const model = {
 		}));
 	},
 
-	readData() {
-		return JSON.parse(window.sessionStorage.getItem('data'));
+	/**
+	 * Gets sessionStorage data.
+	 * @param {string} key - Target sessionStorage data key
+	 * @returns {Data|null} Current sessionStorage data for target key, or null if key does not exist
+	 */
+	readData(key) {
+		return JSON.parse(window.sessionStorage.getItem(key));
 	},
 
 	/**
