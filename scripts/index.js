@@ -1,3 +1,3 @@
-import controller from "./controller.js";
+import controller from './controller.js';
 
-controller.load('data');
+controller.load();

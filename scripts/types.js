@@ -1,20 +1,25 @@
 /**
- * Object of orderable item
- * @typedef {Object} Item
+ * @typedef {object} Item
  * @property {string} description
  * @property {number} uom
  * @property {number} par
- * @property {number} [boh]
- * @property {number} [enRoute]
- * @property {number} [order]
+ * @property {number|null} boh
+ * @property {number|null} enRoute
+ * @property {number|null} order
  */
 
 /** 
- * Object of sessionStorage data
- * @typedef {Object} Data 
- * @property {{stage: string, distributor: string}} state
- * @property {Item[]} [cdc]
- * @property {Item[]} [rdc]
+ * @typedef {object} Data 
+ * @property {object} state
+ * @property {string} state.stage
+ * @property {string|null} state.distributor
+ * @property {Item[]|null} items
+ */
+
+/**
+ * @callback Callback
+ * @param {Event} event
+ * @param {{ [key]: * }} [options]
  */
 
 const types = {};
