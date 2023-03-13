@@ -107,8 +107,8 @@ const view = {
 				const color = components.header.class[stage];
 				const form = create('form', {
 					listeners: [
-						{ type: 'focusin', callback: controller.handleFocusin, color },
-						{ type: 'focusout', callback: controller.handleFocusout, color },
+						{ type: 'focusin', callback: controller.handleFocusin, options: { color }},
+						{ type: 'focusout', callback: controller.handleFocusout, options: { color }},
 						{ type: 'submit', callback: controller.handleSubmit }
 					]
 				});
