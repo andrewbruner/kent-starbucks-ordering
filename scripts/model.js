@@ -6,7 +6,7 @@
 const model = {
 	/**
 	 * @param {string} distributor
-	 * @returns {Item[]}
+	 * @returns {Promise<Item[]>}
 	 */
 	async fetchRemote(distributor) {
 		const spreadsheetId = String('1zx7TGo9KbCaaZYzrFheBvNNjMopc6_Caxy8_xwKd3xI');
@@ -35,6 +35,9 @@ const model = {
 		window.sessionStorage.setItem('data', JSON.stringify(data));
 	},
 
+	/**
+	 * @returns {Data}
+	 */
 	readData() {
 		return JSON.parse(window.sessionStorage.getItem('data'));
 	},
@@ -42,7 +45,7 @@ const model = {
 	/**
 	 * @param {Data} data 
 	 * @param {*} newData 
-	 * @param {string} path 
+	 * @param {string} path
 	 */
 	updateData(data, newData, path) {
 		let _data = data;
@@ -63,15 +66,12 @@ const model = {
 	 * @returns {Item[]}
 	 */
 	calculateOrder() {
-		const data = this.readData();
-		const distributor = data.state.distributor;
-		const newData = data[distributor].map(item => {
+		return this.readData().items.map(item => {
 			let order = Math.ceil((item.par - item.boh - (item.enRoute * item.uom)) / item.uom);
 			order = order > 0 ? order : 0;
 			item = { ...item, order };
 			return item
 		});
-		return { distributor: newData, };
 	},
 };
 
