@@ -19,10 +19,10 @@ const controller = {
 	},
 
 	/**
-	 * @param {Event}
-	 * @param {string} color
+	 * @param {Event} event
+	 * @param {{ color: string }} options
 	 */
-	handleFocusin(event, color) {
+	handleFocusin(event, { color }) {
 		const input = event.target;
 		if (input.tagName === 'INPUT') {
 			input.previousSibling.classList.add('alert', color, 'text-body', 'mb-0');
@@ -33,15 +33,14 @@ const controller = {
 	
 	/**
 	 * @param {Event} event
-	 * @param {string} color
+	 * @param {{ color: string }} options
 	 */
-	handleFocusout(event, color) {
+	handleFocusout(event, { color }) {
 		const input = event.target;
 		if (input.tagName === 'INPUT') {
 			input.previousSibling.classList.remove('alert', color, 'text-body', 'mb-0');
 			input.nextSibling.classList.remove('alert', color, 'text-body', 'mb-0');
 			let data = model.readData();
-			const distributor = data.state.distributor;
 			const index = Number(input.parentElement.dataset.index);
 			const stage = data.state.stage;
 			const newData = Number(input.value)
