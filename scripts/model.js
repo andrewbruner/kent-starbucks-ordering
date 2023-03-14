@@ -32,14 +32,14 @@ const model = {
 	 * @param {Data} data
 	 */
 	createData(data = { state: { stage: 'initial', distributor: null }, items: null }) {
-		window.sessionStorage.setItem('data', JSON.stringify(data));
+		window.localStorage.setItem('data', JSON.stringify(data));
 	},
 
 	/**
 	 * @returns {Data}
 	 */
 	readData() {
-		return JSON.parse(window.sessionStorage.getItem('data'));
+		return JSON.parse(window.localStorage.getItem('data'));
 	},
 
 	/**
@@ -55,11 +55,11 @@ const model = {
 			_data = _data[path[i]];
 		}
 		_data[path[i]] = newData;
-		window.sessionStorage.setItem('data', JSON.stringify(data));
+		window.localStorage.setItem('data', JSON.stringify(data));
 	},
 
 	deleteData() {
-		window.sessionStorage.removeItem('data');
+		window.localStorage.removeItem('data');
 	},
 
 	/**
