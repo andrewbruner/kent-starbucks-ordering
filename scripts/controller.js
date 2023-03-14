@@ -1,81 +1,113 @@
 import model from './model.js';
 import view from './view.js';
 
+/**
+ * @typedef {import('./types.js').Data} Data
+ * @typedef {import('./types.js').Callback} Callback
+ */
+
 const controller = {
-	currentLineSelected: null,
-	handleClick(event, alertColor) {
-		const currentTarget = event.currentTarget;
-		const target = event.target;
-		if (target.tagName.toLowerCase() !== 'input') {
-			const targetInput = currentTarget.children[1];
-			if (this.currentLineSelected === currentTarget) {
-				this.currentLineSelected = null;
-				targetInput.blur();
+	currentSelection: null,
+
+	load() {
+		let data = model.readData();
+		data
+			? view.updateView(data)
+			: (model.createData(),
+				data = model.readData(),
+				view.updateView(data));
+	},
+
+	/**
+	 * @param {Event} event
+	 * @param {{ color: string }} options
+	 */
+	handleFocusin(event, { color }) {
+		const input = event.target;
+		if (input.tagName === 'INPUT') {
+			input.previousSibling.classList.add('alert', color, 'text-body', 'mb-0');
+			input.nextSibling.classList.add('alert', color, 'text-body', 'mb-0');
+			this.currentSelection = input.parentElement;
+		}
+	},
+	
+	/**
+	 * @param {Event} event
+	 * @param {{ color: string }} options
+	 */
+	handleFocusout(event, { color }) {
+		const input = event.target;
+		if (input.tagName === 'INPUT') {
+			input.previousSibling.classList.remove('alert', color, 'text-body', 'mb-0');
+			input.nextSibling.classList.remove('alert', color, 'text-body', 'mb-0');
+			let data = model.readData();
+			const index = Number(input.parentElement.dataset.index);
+			const stage = data.state.stage;
+			const newData = Number(input.value)
+				? (input.value = Number(input.value), Number(input.value))
+				: input.value === '0'
+					? 0
+					: input.value === ''
+						? null
+						: data.items[index][stage] === null
+							? (input.value = '', null)
+							: (input.value = data.items[index][stage], data.items[index][stage]);
+			const path = `items.${index}.${stage}`;
+			model.updateData(data, newData, path);
+			view.updateItem(index, data);
+		}
+	},
+
+	/**
+	 * @param {Event} event
+	 */
+	handleClick(event) {
+		if (event.target.tagName !== 'INPUT') {
+			const targetInput = event.currentTarget.children[1];
+			if (this.currentSelection === event.currentTarget) {
+				this.currentSelection = null;
 			} else {
-			targetInput.focus();
+				targetInput.focus();
 			}
 		}
 	},
-	handleFocusin(event, alertColor) {
-		const input = event.target;
-		if (input.tagName.toLowerCase() === 'input') {
-			const previousSibling = input.previousSibling;
-			const nextSibling = input.nextSibling;
-			previousSibling.classList.add('alert', alertColor, 'text-body', 'mb-0');
-			nextSibling.classList.add('alert', alertColor, 'text-body', 'mb-0');
-			this.currentLineSelected = input.parentElement;
-		}
-	},
-	handleFocusout(event, alertColor) {
-		const input = event.target;
-		if (input.tagName.toLowerCase() === 'input') {
-			const previousSibling = input.previousSibling;
-			const nextSibling = input.nextSibling;
-			previousSibling.classList.remove('alert', alertColor, 'text-body', 'mb-0');
-			nextSibling.classList.remove('alert', alertColor, 'text-body', 'mb-0');
-			if ((input.value > 0 && input.value < 1000) || input.value === '0') {
-				const value = input.value;
-				const index = parseInt(input.dataset.index);
-				const distributor = model.database.state.distributor;
-				const stage = model.database.state.stage;
-				const newData = parseInt(value);
-				const pathToData = `data.${distributor}.${index}.${stage}`;
-				model.updateLocalDatabase(newData, pathToData);
-				model.updateRemoteDatabase();
+
+	/**
+	 * @param {Event} event
+	 */
+	async handleSubmit(event) {
+		if (event.target.classList.contains('_distributor')) {
+			event.preventDefault();
+			const data = model.readData('data');
+			model.updateData(data, 'boh', 'state.stage');
+			const distributor = event.submitter.value;
+			await model.fetchRemote(distributor)
+				.then(items => {
+					model.updateData(data, items, 'items');
+					event.target.submit();
+				});
+		} else {
+			let data = model.readData()
+			const stage = data.state.stage;
+			let newData = data.items.map(item => item[stage] === null ? { ...item, [stage]: 0 } : item );
+			model.updateData(data, newData, 'items');
+			if (stage === 'enRoute') {
+				data = model.readData();
+				const items = model.calculateOrder();
+				newData = data.items.map((item, index) => ({ ...item, 'order': items[index].order }));
+				model.updateData(data, newData, 'items');
 			}
-		}
-	},
-	handleSubmit(event) {
-		const distributor = model.database.state.distributor;
-		const currentStage = model.database.state.stage;
-		const nextStage = currentStage === 'boh' ? 'enRoute' : currentStage === 'enRoute' ? 'order' : 'boh';
-		
-		if (nextStage === 'boh') {
-			model.removeRemoteDatabase();
-		}
-
-		if (nextStage === 'enRoute' || nextStage === 'order') {
-			const newItemsData = model.database.data[distributor].map(item => {
-				if (isNaN(parseInt(item[currentStage]))) {
-					return { ...item, [currentStage]: 0 };
-				} else {
-					return item;
-				}
-			});
-			const pathToItemsData = `data.${distributor}`;
-			model.updateLocalDatabase(newItemsData, pathToItemsData);
-		}
-
-		if (nextStage === 'order') {
-			model.calculateOrder();
-		}
-		
-		const newStageData = nextStage;
-		const pathToStageData = `state.stage`;
-		model.updateLocalDatabase(newStageData, pathToStageData);
-		
-		if (nextStage !== 'boh') {
-			model.updateRemoteDatabase();
+			const newState = stage === 'boh'
+				? 'enRoute'
+				: data.state.stage === 'enRoute'
+					? 'order'
+					: null;
+			if (newState) {
+				const statePath = 'state.stage';
+				model.updateData(data, newState, statePath);
+			} else {
+				model.deleteData();
+			}
 		}
 	},
 };

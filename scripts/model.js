@@ -1,65 +1,77 @@
+/**
+ * @typedef {import('./types.js').Item} Item
+ * @typedef {import('./types.js').Data} Data
+ */
+
 const model = {
-	database: {
-		state: {
-			distributor: 'cdc',
-			stage: 'boh',
-		},
-		data: {
-			cdc: [],
-			rdc: [],
-		},
+	/**
+	 * @param {string} distributor
+	 * @returns {Promise<Item[]>}
+	 */
+	async fetchRemote(distributor) {
+		const spreadsheetId = String('1zx7TGo9KbCaaZYzrFheBvNNjMopc6_Caxy8_xwKd3xI');
+		const range = distributor;
+		// key usage restricted to specified website
+		const key = String('AIzaSyADnkNWzw5wme2wHe2PQzpjm-Kv77Hsl_s');
+		const url = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${key}`);
+		return await fetch(url)
+			.then(response => response.json())
+			.then(data => data.values.filter(data => data.length === 3)
+				.map(data => ({
+					description: String(data[0]),
+					uom: Number(data[1].split('/')[0]),
+					par: Number(data[2]),
+					boh: null,
+					enRoute: null,
+					order: null,
+				})),
+			);
 	},
 
-	updateRemoteDatabase() {
-		const localDatabase = this.database;
-		const localDatabaseString = JSON.stringify(localDatabase);
-		window.sessionStorage.setItem('database', localDatabaseString);
+	/**
+	 * @param {Data} data
+	 */
+	createData(data = { state: { stage: 'initial', distributor: null }, items: null }) {
+		window.sessionStorage.setItem('data', JSON.stringify(data));
 	},
-	removeRemoteDatabase() {
-		window.sessionStorage.removeItem('database');
+
+	/**
+	 * @returns {Data}
+	 */
+	readData() {
+		return JSON.parse(window.sessionStorage.getItem('data'));
 	},
-	getRemoteDatabase() {
-		const remoteDatabaseString = window.sessionStorage.getItem('database');
-		if (remoteDatabaseString) {
-			const remoteDatabase = JSON.parse(remoteDatabaseString);
-			this.database = remoteDatabase;
-			return true;
+
+	/**
+	 * @param {Data} data 
+	 * @param {*} newData 
+	 * @param {string} path
+	 */
+	updateData(data, newData, path) {
+		let _data = data;
+		path = path.split('.');
+		let i = 0;
+		for (i = 0; i < path.length - 1; i++) {
+			_data = _data[path[i]];
 		}
-		return false;
+		_data[path[i]] = newData;
+		window.sessionStorage.setItem('data', JSON.stringify(data));
 	},
-	updateLocalDatabase(newData, pathToData) {
-		let localDatabaseReference = this.database;
-		pathToData = pathToData.split('.');
-		let i = 0
-		for (i = 0; i < pathToData.length - 1; i++) {
-			localDatabaseReference = localDatabaseReference[pathToData[i]];
-		}
-		localDatabaseReference[pathToData[i]] = newData;
+
+	deleteData() {
+		window.sessionStorage.removeItem('data');
 	},
+
+	/**
+	 * @returns {Item[]}
+	 */
 	calculateOrder() {
-		const localDatabase = this.database;
-		const distributor = localDatabase.state.distributor;
-		const newData = localDatabase.data[distributor].map(item => {
+		return this.readData().items.map(item => {
 			let order = Math.ceil((item.par - item.boh - (item.enRoute * item.uom)) / item.uom);
 			order = order > 0 ? order : 0;
 			item = { ...item, order };
 			return item;
 		});
-		this.updateLocalDatabase(newData, `data.${distributor}`);
-	},
-	processData(data) {
-		const dataArray = data.values;
-		const items = [];
-		dataArray.forEach(data => {
-			if (data.length === 3) {
-				const item = {};
-				item.description = data[0];
-				item.uom = parseInt(data[1].split('/')[0]);
-				item.par = parseInt(data[2]);
-				items.push(item);
-			}
-		});
-		return items;
 	},
 };
 
