@@ -81,6 +81,7 @@ const controller = {
 			const data = model.readData('data');
 			model.updateData(data, 'boh', 'state.stage');
 			const distributor = event.submitter.value;
+			model.updateData(data, distributor, 'state.distributor');
 			await model.fetchRemote(distributor)
 				.then(items => {
 					model.updateData(data, items, 'items');
