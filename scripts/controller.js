@@ -76,7 +76,7 @@ const controller = {
 	 * @param {Event} event
 	 */
 	async handleSubmit(event) {
-		if (event.target.classList.includes('_distributor')) {
+		if (event.target.classList.contains('_distributor')) {
 			event.preventDefault();
 			const data = model.readData('data');
 			model.updateData(data, 'boh', 'state.stage');
@@ -87,10 +87,16 @@ const controller = {
 					event.target.submit();
 				});
 		} else {
-			const data = model.readData()
+			let data = model.readData()
 			const stage = data.state.stage;
-			const newData = data.items.map(item => ( item[stage] === null ? { ...item, [stage]: 0 } : item ));
+			let newData = data.items.map(item => item[stage] === null ? { ...item, [stage]: 0 } : item );
 			model.updateData(data, newData, 'items');
+			if (stage === 'enRoute') {
+				data = model.readData();
+				const items = model.calculateOrder();
+				newData = data.items.map((item, index) => ({ ...item, 'order': items[index].order }));
+				model.updateData(data, newData, 'items');
+			}
 			const newState = stage === 'boh'
 				? 'enRoute'
 				: data.state.stage === 'enRoute'

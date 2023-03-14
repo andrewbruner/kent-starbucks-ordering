@@ -70,7 +70,7 @@ const model = {
 			let order = Math.ceil((item.par - item.boh - (item.enRoute * item.uom)) / item.uom);
 			order = order > 0 ? order : 0;
 			item = { ...item, order };
-			return item
+			return item;
 		});
 	},
 };
