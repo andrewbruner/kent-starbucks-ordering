@@ -10,6 +10,54 @@
 		<div id="app">
 		</div>
 
+    <script src="https://accounts.google.com/gsi/client"></script>
 		<script src="./scripts/index.js" type="module"></script>
+
+		<script>
+      // credentials
+      const clientId = `265509486728-o1fv1j4enj6qbb11sr4ggldljm6su0c2.apps.googleusercontent.com`;
+      const client_id = clientId;
+      const apiKey = `AIzaSyADnkNWzw5wme2wHe2PQzpjm-Kv77Hsl_s`;
+      // token parameters
+      const scope = `https://www.googleapis.com/auth/drive.file`;
+      // api initialization
+      const discoveryUrl = `https://sheets.googleapis.com/$discovery/rest?version=v4`;
+      const discoveryDocs = [discoveryUrl];
+      // api call
+      const spreadsheetId = `1zx7TGo9KbCaaZYzrFheBvNNjMopc6_Caxy8_xwKd3xI`;
+      const range = `cdc!a1:a1`;
+      const valueInputOption = `USER_ENTERED`;
+      const valueRangeBody = { range, majorDimension: 'ROWS', values: [['hello world']]};
+      const url = `https://content-sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=${valueInputOption}&alt=json`;
+      const body = {
+        majorDimension: `ROWS`,
+        range,
+        values: [
+          [
+            `hello world`,
+          ]
+        ],
+      };
+
+      function callback(response) {
+        fetch(url, {
+          method: `put`,
+          headers: {
+            authorization: `Bearer ${response.access_token}`,
+            accept: `application/json`,
+            'content-type': `application/json`,
+          },
+          body: JSON.stringify(body),
+        })
+          .then(response => response.json())
+          .then(data => console.log(data))
+          .catch(error => console.error(error));
+      }
+
+      const client = google.accounts.oauth2.initTokenClient({ client_id, scope, callback, });
+
+      // client.requestAccessToken();
+  
+		</script>
 	</body>
 </html>
