@@ -148,6 +148,18 @@ html {
 					}
 				}
 			}
+
+			> .atPar {
+				align-items: center;
+				display: flex;
+				padding: 0 0.75rem 0.5rem;
+
+				> input {
+					height: 1.5rem;
+					margin-left: 0.5rem;
+					width: 1.5rem;
+				}
+			}
 		}
 		> .controls {
 			> .tabulature {

@@ -337,6 +337,44 @@ function loadApp() {
 				$details.textContent = `${data[index].uom}/cs / Par ${data[index].par}`;
 				$display.append($details);
 
+				// App > Modal > Display > AtPar
+				const $atPar = document.createElement('div');
+				$atPar.classList.add('atPar');
+				$atPar.textContent = `At Par`;
+				const atParCheckbox = document.createElement('input');
+				atParCheckbox.type = 'checkbox';
+				atParCheckbox.checked = data[index].par <= data[index].onHand.eaches.value
+					+ data[index].onHand.cases.value * data[index].uom
+					+ data[index].enRoute.eaches.value
+					+ data[index].enRoute.cases.value * data[index].uom;
+				if (atParCheckbox.checked) {
+					atParCheckbox.disabled = true;
+				}
+				atParCheckbox.onchange = () => {
+					if (atParCheckbox.checked) {
+						data[index][stage][uom].value += data[index].par
+							- data[index].onHand.eaches.value
+							- data[index].onHand.cases.value * data[index].uom
+							- data[index].enRoute.eaches.value
+							- data[index].enRoute.cases.value * data[index].uom;
+						if (uom === 'cases') {
+							data[index][stage][uom].value
+								= Math.ceil(data[index][stage][uom].value / data[index].uom);
+						}
+						data[index][stage][uom].updated = true;
+						data[index][stage].updated = true;
+						if (!data[index].enRoute.updated) {
+							data[index].enRoute.updated = true;
+						}
+						// Reload App
+						localStorage.setItem('database', JSON.stringify(database));
+						loadApp();
+					}
+				}
+
+				$atPar.append(atParCheckbox);
+				$display.append($atPar);
+
 				$modal.append($display);
 
 				// App > Modal > Controls
