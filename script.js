@@ -217,10 +217,33 @@ function loadApp() {
 
 		$form.append($items);
 
+		// App > Back
+		const $back = document.createElement('div');
+		$back.classList.add('back');
+		$back.textContent = 'Back';
+
+		// Back Click Event
+		$back.onclick = () => {
+			state.stage = stages[stages.indexOf(stage) - 1];
+			state.uom = 'eaches';
+
+			// Reload App
+			localStorage.setItem('database', JSON.stringify(database));
+			$app.scrollTop = 0;
+			loadApp();
+		};
+
+		$form.append($back);
+
+
 		// App > Submit
 		const $submit = document.createElement('div');
 		$submit.classList.add('submit');
-		$submit.textContent = 'Complete';
+		if (stage === 'order') {
+			$submit.textContent = 'Complete';
+		} else {
+			$submit.textContent = 'Next';
+		}
 
 		// Submit Click Event
 		$submit.onclick = () => {
