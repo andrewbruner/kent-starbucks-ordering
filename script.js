@@ -200,8 +200,12 @@ function loadApp() {
 				);
 				if (total >= 0) {
 					$total.textContent = total;
+					if (total === 0) {
+						$item.classList.add('disabled');
+					}
 				} else {
 					$total.textContent = 0;
+					$item.classList.add('disabled');
 				}
 			}
 			$details.append($total);
