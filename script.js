@@ -200,8 +200,12 @@ function loadApp() {
 				);
 				if (total >= 0) {
 					$total.textContent = total;
+					if (total === 0) {
+						$item.classList.add('disabled');
+					}
 				} else {
 					$total.textContent = 0;
+					$item.classList.add('disabled');
 				}
 			}
 			$details.append($total);
@@ -213,10 +217,33 @@ function loadApp() {
 
 		$form.append($items);
 
+		// App > Back
+		const $back = document.createElement('div');
+		$back.classList.add('back');
+		$back.textContent = 'Back';
+
+		// Back Click Event
+		$back.onclick = () => {
+			state.stage = stages[stages.indexOf(stage) - 1];
+			state.uom = 'eaches';
+
+			// Reload App
+			localStorage.setItem('database', JSON.stringify(database));
+			$app.scrollTop = 0;
+			loadApp();
+		};
+
+		$form.append($back);
+
+
 		// App > Submit
 		const $submit = document.createElement('div');
 		$submit.classList.add('submit');
-		$submit.textContent = 'Complete';
+		if (stage === 'order') {
+			$submit.textContent = 'Complete';
+		} else {
+			$submit.textContent = 'Next';
+		}
 
 		// Submit Click Event
 		$submit.onclick = () => {
@@ -554,6 +581,7 @@ function loadApp() {
 				const $details = document.createElement('div');
 				$details.classList.add('details', 'order');
 
+				/*
 				// LaTex Formula
 				let generator = new window.latexjs.HtmlGenerator();
 				let formula = `$$\\max\\left(0, \\left\\lceil\\frac{Par - (On Hand + En Route)}{UoM}\\right\\rceil\\right)=Order$$`;
@@ -577,8 +605,42 @@ function loadApp() {
 				text = window.latexjs.parse(text, { generator }).domFragment();
 				text = text.querySelector('.katex-mathml');
 				$details.append(text);
+				*/
+
+				let formula = document.createElement('div');
+				formula.textContent = `⌈ ( Par - ( OnHand + EnRoute ) ) / UoM} ⌉ = Order`;
+				$details.append(formula);
+
+				const par = data[index].par;
+				const onHand = data[index].onHand.eaches.value + data[index].onHand.cases.value * data[index].uom;
+				const enRoute = data[index].enRoute.eaches.value + data[index].enRoute.cases.value * data[index].uom;
+				const uom = data[index].uom;
+				const ceiling = Math.ceil((par - (onHand + enRoute)) / uom);
+				let text = document.createElement('div');
+				text.textContent = `⌈ ( ${par} - ( ${onHand} + ${enRoute} ) ) / ${uom} ⌉ = ${ceiling}`;
+				$details.append(text);
 
 				$display.append($details);
+
+				const $suggestion = document.createElement('div');
+				$suggestion.classList.add('suggestion');
+				const safety = par * 0.15;// 15% safety stock
+				const lowPar = Math.ceil(par - safety);// 85% of par
+				const highPar = Math.ceil(par + safety);// 115% of par
+				const newUsage = (par - (onHand + enRoute)) * 2// new usage
+				const newSafety = newUsage * 0.15;// 15% safety stock
+				const newPar = Math.ceil(newUsage + newSafety);// new par
+				if (onHand + enRoute > par) {// more than 100% of par
+					$suggestion.textContent = `current inventory is at or above par`;
+				} else if (lowPar < newPar && par < newPar) {// less than 85% of par
+					$suggestion.textContent = `⮝⮝ Suggest to increase par from ${par} to ${newPar} ⮝⮝`;
+				} else if (highPar > newPar && par > newPar) {// more than 115% of par
+				 	$suggestion.textContent = `⮟⮟ Suggest to decrease par from ${par} to ${newPar} ⮟⮟`;
+				} else {// 85% to 115% of par
+					$suggestion.textContent = `Running Par of ${newPar} is within range  ${lowPar} to ${highPar}`;
+				}
+
+				$display.append($suggestion);
 
 				$modal.append($display);
 
