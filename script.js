@@ -18,11 +18,11 @@ function loadApp() {
 			data: null,
 			state: {
 				index: null,
-				distributors: ['cdc', 'rdc', 'staples', 'createOrder'],
-				distributorsText: ['CDC-Penske', 'RDC-York', 'Staples', 'Create Order'],
+				distributors: ['cdc', 'freshFood', 'rdc', 'staples', 'createOrder'],
+				distributorsText: ['CDC-Penske', 'Fresh Food', 'RDC-York', 'Staples', 'Create Order'],
 				stage: 'distributor',
-				stages: ['distributor', 'onHand', 'enRoute', 'order'],
-				stagesText: ['Select Distributor', 'On Hand', 'En Route', 'Order'],
+				stages: ['distributor', 'enRoute', 'onHand', 'order'],
+				stagesText: ['Select Distributor', 'En Route', 'On Hand', 'Order'],
 				uom: 'eaches',
 				uoms: ['eaches', 'cases'],
 				uomsText: ['Eaches', 'Cases'],
@@ -72,7 +72,10 @@ function loadApp() {
 
 				// Update State
 				state.distributor = distributor;
-				state.stage = 'onHand';
+				state.stage = 'enRoute';
+				if (distributor === 'freshFood') {
+					state.stage = 'order';
+				}
 
 				// Fetch Data
 				const spreadsheetId = '1DDYliKZaRh0reUxmcLrQ-QS_2lf_qmeIuiM0nRWN_gk';
@@ -225,6 +228,9 @@ function loadApp() {
 		// Back Click Event
 		$back.onclick = () => {
 			state.stage = stages[stages.indexOf(stage) - 1];
+			if (state.distributor === 'freshFood') {
+				state.stage = stages[0];
+			}
 			state.uom = 'eaches';
 
 			// Reload App
@@ -293,14 +299,14 @@ function loadApp() {
 			const $total = document.createElement('div');
 			$total.classList.add('total');
 			if (stage !== 'order') {
-				if (data[index].onHand.updated) {
-					$total.textContent = data[index].onHand.eaches.value + data[index].onHand.cases.value * data[index].uom;
+				if (data[index].enRoute.updated) {
+					$total.textContent = data[index].enRoute.eaches.value + data[index].enRoute.cases.value * data[index].uom;
 
-					if (data[index].enRoute.updated) {
+					if (data[index].onHand.updated) {
 						$total.textContent =
 							+$total.textContent +
-							data[index].enRoute.eaches.value +
-							data[index].enRoute.cases.value * data[index].uom;
+							data[index].onHand.eaches.value +
+							data[index].onHand.cases.value * data[index].uom;
 					}
 				} else {
 					$total.textContent = '- -';
@@ -308,10 +314,10 @@ function loadApp() {
 			} else {
 				const ceiling = Math.ceil(
 					(data[index].par -
-						(data[index].onHand.eaches.value +
-							data[index].onHand.cases.value * data[index].uom +
-							data[index].enRoute.eaches.value +
-							data[index].enRoute.cases.value * data[index].uom)) /
+						(data[index].enRoute.eaches.value +
+							data[index].enRoute.cases.value * data[index].uom +
+							data[index].onHand.eaches.value +
+							data[index].onHand.cases.value * data[index].uom)) /
 						data[index].uom,
 				);
 				if (ceiling < 0) {
@@ -329,32 +335,33 @@ function loadApp() {
 				const $inventory = document.createElement('div');
 				$inventory.classList.add('inventory');
 
-				const $onHand = document.createElement('span');
-				$onHand.classList.add('onHand');
+				const $enRoute = document.createElement('span');
+				$enRoute.classList.add('enRoute');
 
 				const $span = document.createElement('span');
 				$span.textContent = ' / ';
 
-				const $enRoute = document.createElement('span');
-				$enRoute.classList.add('enRoute');
+				const $onHand = document.createElement('span');
+				$onHand.classList.add('onHand');
 
-				if (data[index].onHand.updated) {
-					$onHand.textContent = `On Hand ${
-						data[index].onHand.eaches.value + data[index].onHand.cases.value * data[index].uom
+
+				if (data[index].enRoute.updated) {
+					$enRoute.textContent = `En Route ${
+						data[index].enRoute.eaches.value + data[index].enRoute.cases.value * data[index].uom
 					}`;
-					if (data[index].enRoute.updated) {
-						$enRoute.textContent = `En Route ${
-							data[index].enRoute.eaches.value + data[index].enRoute.cases.value * data[index].uom
+					if (data[index].onHand.updated) {
+						$onHand.textContent = `On Hand ${
+							data[index].onHand.eaches.value + data[index].onHand.cases.value * data[index].uom
 						}`;
 					} else {
-						$enRoute.textContent = `En Route - -`;
+						$onHand.textContent = `On Hand - -`;
 					}
 				} else {
-					$onHand.textContent = 'On Hand - -';
 					$enRoute.textContent = 'En Route - -';
+					$onHand.textContent = 'On Hand - -';
 				}
 
-				$inventory.append($onHand, $span, $enRoute);
+				$inventory.append($enRoute, $span, $onHand);
 
 				$display.append($inventory);
 
@@ -370,28 +377,28 @@ function loadApp() {
 				$atPar.textContent = `At Par`;
 				const atParCheckbox = document.createElement('input');
 				atParCheckbox.type = 'checkbox';
-				atParCheckbox.checked = data[index].par <= data[index].onHand.eaches.value
-					+ data[index].onHand.cases.value * data[index].uom
-					+ data[index].enRoute.eaches.value
-					+ data[index].enRoute.cases.value * data[index].uom;
+				atParCheckbox.checked = data[index].par <= data[index].enRoute.eaches.value
+					+ data[index].enRoute.cases.value * data[index].uom
+					+ data[index].onHand.eaches.value
+					+ data[index].onHand.cases.value * data[index].uom;
 				if (atParCheckbox.checked) {
 					atParCheckbox.disabled = true;
 				}
 				atParCheckbox.onchange = () => {
 					if (atParCheckbox.checked) {
 						data[index][stage][uom].value += data[index].par
-							- data[index].onHand.eaches.value
-							- data[index].onHand.cases.value * data[index].uom
 							- data[index].enRoute.eaches.value
-							- data[index].enRoute.cases.value * data[index].uom;
+							- data[index].enRoute.cases.value * data[index].uom
+							- data[index].onHand.eaches.value
+							- data[index].onHand.cases.value * data[index].uom;
 						if (uom === 'cases') {
 							data[index][stage][uom].value
 								= Math.ceil(data[index][stage][uom].value / data[index].uom);
 						}
 						data[index][stage][uom].updated = true;
 						data[index][stage].updated = true;
-						if (!data[index].enRoute.updated) {
-							data[index].enRoute.updated = true;
+						if (!data[index].onHand.updated) {
+							data[index].onHand.updated = true;
 						}
 						// Reload App
 						localStorage.setItem('database', JSON.stringify(database));
@@ -608,16 +615,16 @@ function loadApp() {
 				*/
 
 				let formula = document.createElement('div');
-				formula.textContent = `⌈ ( Par - ( OnHand + EnRoute ) ) / UoM} ⌉ = Order`;
+				formula.textContent = `⌈ ( Par - ( EnRoute + OnHand ) ) / UoM} ⌉ = Order`;
 				$details.append(formula);
 
 				const par = data[index].par;
-				const onHand = data[index].onHand.eaches.value + data[index].onHand.cases.value * data[index].uom;
 				const enRoute = data[index].enRoute.eaches.value + data[index].enRoute.cases.value * data[index].uom;
+				const onHand = data[index].onHand.eaches.value + data[index].onHand.cases.value * data[index].uom;
 				const uom = data[index].uom;
-				const ceiling = Math.ceil((par - (onHand + enRoute)) / uom);
+				const ceiling = Math.ceil((par - (enRoute + onHand)) / uom);
 				let text = document.createElement('div');
-				text.textContent = `⌈ ( ${par} - ( ${onHand} + ${enRoute} ) ) / ${uom} ⌉ = ${ceiling}`;
+				text.textContent = `⌈ ( ${par} - ( ${enRoute} + ${onHand} ) ) / ${uom} ⌉ = ${ceiling}`;
 				$details.append(text);
 
 				$display.append($details);
@@ -627,10 +634,10 @@ function loadApp() {
 				const safety = par * 0.15;// 15% safety stock
 				const lowPar = Math.ceil(par - safety);// 85% of par
 				const highPar = Math.ceil(par + safety);// 115% of par
-				const newUsage = (par - (onHand + enRoute)) * 2// new usage
+				const newUsage = (par - (enRoute + onHand)) * 2// new usage
 				const newSafety = newUsage * 0.15;// 15% safety stock
 				const newPar = Math.ceil(newUsage + newSafety);// new par
-				if (onHand + enRoute > par) {// more than 100% of par
+				if (enRoute + onHand > par) {// more than 100% of par
 					$suggestion.textContent = `current inventory is at or above par`;
 				} else if (lowPar < newPar && par < newPar) {// less than 85% of par
 					$suggestion.textContent = `⮝⮝ Suggest to increase par from ${par} to ${newPar} ⮝⮝`;
